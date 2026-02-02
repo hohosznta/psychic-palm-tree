@@ -14,12 +14,14 @@ import {
   Minus,
   Plus,
   Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { FutureVision, OKRData } from "@/types";
 
 interface ReportSectionProps {
   futureVision: FutureVision;
   okrData: OKRData;
+  onGoToWeeklyPlan?: () => void;
 }
 
 interface ParsedVision {
@@ -32,6 +34,7 @@ interface ParsedVision {
 export default function ReportSection({
   futureVision,
   okrData,
+  onGoToWeeklyPlan,
 }: ReportSectionProps) {
   // Parse the vision text into structured sections
   const parseVision = (visionText: string): ParsedVision => {
@@ -378,6 +381,20 @@ export default function ReportSection({
           ))}
         </div>
       </div>
+
+      {/* Go to Weekly Plan Button */}
+      {onGoToWeeklyPlan && (
+        <div className="flex justify-center pt-4">
+          <button
+            onClick={onGoToWeeklyPlan}
+            className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl font-black text-lg shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-105 transition-all"
+          >
+            <Calendar className="w-6 h-6" />
+            이번 주 업무 계획 보기
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
+      )}
     </section>
   );
 }

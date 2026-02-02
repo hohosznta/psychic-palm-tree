@@ -1,16 +1,20 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import CoachingSection from "@/components/CoachingSection";
 import VisionSection from "@/components/VisionSection";
 import AnalysisSection from "@/components/AnalysisSection";
 import ReportSection from "@/components/ReportSection";
+import WeeklyPlanSection from "@/components/WeeklyPlanSection";
+import LoginModal from "@/components/LoginModal";
 import { Message, OKRData, VisionData, FutureVision, PERSONAS } from "@/types";
 
 export default function Home() {
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  const { data: session, status } = useSession();
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "initial",
@@ -222,14 +226,37 @@ export default function Home() {
       handleReset();
     } else if (step === 2 && currentStep >= 2) {
       setCurrentStep(2);
-    } else if (step === 4 && currentStep === 4) {
+    } else if (step === 4 && currentStep >= 4) {
       setCurrentStep(4);
+    } else if (step === 5 && currentStep >= 4) {
+      setCurrentStep(5);
     }
   };
 
+  const handleGoToWeeklyPlan = () => {
+    setCurrentStep(5);
+  };
+
+  // Show loading state
+  if (status === "loading") {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-slate-200 border-t-[#F97316] rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-500 font-bold">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login modal if not authenticated
+  if (!session) {
+    return <LoginModal />;
+  }
+
   return (
     <div className="flex h-full">
-      <Sidebar currentStep={currentStep} onNavClick={handleNavClick} />
+      <Sidebar currentStep={currentStep} onNavClick={handleNavClick} userName={session.user?.name || "User"} userImage={session.user?.image} />
 
       <main className="flex-1 flex flex-col relative overflow-hidden">
         <Header currentStep={currentStep} onReset={handleReset} />
@@ -264,7 +291,19 @@ export default function Home() {
             {currentStep === 3 && <AnalysisSection />}
 
             {currentStep === 4 && futureVision && okrData && (
-              <ReportSection futureVision={futureVision} okrData={okrData} />
+              <ReportSection
+                futureVision={futureVision}
+                okrData={okrData}
+                onGoToWeeklyPlan={handleGoToWeeklyPlan}
+              />
+            )}
+
+            {currentStep === 5 && (
+              <WeeklyPlanSection
+                okrData={okrData}
+                persona={futureVision?.persona || null}
+                visionData={visionData}
+              />
             )}
           </div>
         </div>
