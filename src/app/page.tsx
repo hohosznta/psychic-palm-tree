@@ -1,0 +1,274 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
+import CoachingSection from "@/components/CoachingSection";
+import VisionSection from "@/components/VisionSection";
+import AnalysisSection from "@/components/AnalysisSection";
+import ReportSection from "@/components/ReportSection";
+import { Message, OKRData, VisionData, FutureVision, PERSONAS } from "@/types";
+
+export default function Home() {
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "initial",
+      role: "ai",
+      content:
+        "안녕하세요! INTERX OKR 코치입니다. 현재 집중하고 싶은 가장 큰 목표(Objective)가 무엇인가요? 자유롭게 말씀해주시면 함께 구체화해보겠습니다.",
+    },
+  ]);
+  const [inputValue, setInputValue] = useState("");
+  const [okrData, setOkrData] = useState<OKRData | null>(null);
+  const [okrSummary, setOkrSummary] = useState("");
+  const [showOKRCard, setShowOKRCard] = useState(false);
+  const [visionData, setVisionData] = useState<VisionData>({
+    career: { achievement: "", position: "", skills: "" },
+    personal: { goals: "", hobbies: "", lifestyle: "" },
+    relationships: { team: "", networking: "", family: "" },
+    learning: { newThings: "", expertise: "", certification: "" },
+    values: { important: "", workStyle: "", purpose: "" },
+  });
+  const [futureVision, setFutureVision] = useState<FutureVision | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
+
+  const handleSend = useCallback(async () => {
+    if (!inputValue.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: inputValue.trim(),
+    };
+
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setInputValue("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage.content,
+          conversationHistory: updatedMessages,
+        }),
+      });
+
+      const data = await response.json();
+
+      const aiMessage: Message = {
+        id: `ai-${Date.now()}`,
+        role: "ai",
+        content: data.message || "죄송합니다, 응답을 생성하지 못했습니다.",
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      const errorMessage: Message = {
+        id: `ai-${Date.now()}`,
+        role: "ai",
+        content: "네트워크 오류가 발생했습니다. 다시 시도해주세요.",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [inputValue, isLoading, messages]);
+
+  const handleExtractOKR = useCallback(async () => {
+    setIsExtracting(true);
+
+    try {
+      const response = await fetch("/api/extract-okr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationHistory: messages,
+        }),
+      });
+
+      const data = await response.json();
+
+      setOkrData({
+        objective: data.objective,
+        keyResults: data.keyResults,
+      });
+      setOkrSummary(data.summary || "");
+      setShowOKRCard(true);
+    } catch (error) {
+      console.error("OKR extraction error:", error);
+      // Fallback
+      setOkrData({
+        objective: "목표를 다시 정리해주세요",
+        keyResults: [
+          "핵심 결과 1을 구체화해주세요",
+          "핵심 결과 2를 구체화해주세요",
+          "핵심 결과 3을 구체화해주세요",
+        ],
+      });
+      setOkrSummary("대화 내용에서 OKR을 추출하지 못했습니다.");
+      setShowOKRCard(true);
+    } finally {
+      setIsExtracting(false);
+    }
+  }, [messages]);
+
+  const handleVisionStart = () => {
+    setCurrentStep(2);
+  };
+
+  const handleVisionChange = (
+    category: keyof VisionData,
+    field: string,
+    value: string
+  ) => {
+    setVisionData((prev) => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleVisionSubmit = async () => {
+    if (!okrData) return;
+
+    setCurrentStep(3);
+    setIsLoading(true);
+
+    try {
+      // First, classify persona
+      const personaResponse = await fetch("/api/classify-persona", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ okrData, visionData }),
+      });
+
+      const personaResult = await personaResponse.json();
+      const persona = personaResult.persona || PERSONAS["F"];
+
+      // Then, generate vision
+      const visionResponse = await fetch("/api/generate-vision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ okrData, visionData, persona }),
+      });
+
+      const visionResult = await visionResponse.json();
+
+      setFutureVision({
+        persona,
+        vision: visionResult.vision,
+        actionPlan: visionResult.actionPlan,
+        generatedAt: visionResult.generatedAt,
+        okrReference: okrData.objective,
+      });
+
+      // Show report after analysis
+      setTimeout(() => {
+        setCurrentStep(4);
+        setIsLoading(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Error generating vision:", error);
+      // Fallback with mock data
+      setFutureVision({
+        persona: PERSONAS["F"],
+        vision: "AI가 생성한 미래 비전이 여기에 표시됩니다.",
+        generatedAt: new Date().toISOString(),
+        okrReference: okrData.objective,
+      });
+      setTimeout(() => {
+        setCurrentStep(4);
+        setIsLoading(false);
+      }, 2000);
+    }
+  };
+
+  const handleReset = () => {
+    setCurrentStep(1);
+    setMessages([
+      {
+        id: "initial",
+        role: "ai",
+        content:
+          "안녕하세요! INTERX OKR 코치입니다. 현재 집중하고 싶은 가장 큰 목표(Objective)가 무엇인가요? 자유롭게 말씀해주시면 함께 구체화해보겠습니다.",
+      },
+    ]);
+    setInputValue("");
+    setOkrData(null);
+    setOkrSummary("");
+    setShowOKRCard(false);
+    setVisionData({
+      career: { achievement: "", position: "", skills: "" },
+      personal: { goals: "", hobbies: "", lifestyle: "" },
+      relationships: { team: "", networking: "", family: "" },
+      learning: { newThings: "", expertise: "", certification: "" },
+      values: { important: "", workStyle: "", purpose: "" },
+    });
+    setFutureVision(null);
+    setIsLoading(false);
+    setIsExtracting(false);
+  };
+
+  const handleNavClick = (step: number) => {
+    if (step === 1) {
+      handleReset();
+    } else if (step === 2 && currentStep >= 2) {
+      setCurrentStep(2);
+    } else if (step === 4 && currentStep === 4) {
+      setCurrentStep(4);
+    }
+  };
+
+  return (
+    <div className="flex h-full">
+      <Sidebar currentStep={currentStep} onNavClick={handleNavClick} />
+
+      <main className="flex-1 flex flex-col relative overflow-hidden">
+        <Header currentStep={currentStep} onReset={handleReset} />
+
+        <div className="flex-1 overflow-y-auto p-10 bg-slate-50/50">
+          <div className="max-w-4xl mx-auto h-full">
+            {currentStep === 1 && (
+              <CoachingSection
+                messages={messages}
+                inputValue={inputValue}
+                onInputChange={setInputValue}
+                onSend={handleSend}
+                onVisionStart={handleVisionStart}
+                onExtractOKR={handleExtractOKR}
+                isLoading={isLoading}
+                isExtracting={isExtracting}
+                okrData={okrData}
+                okrSummary={okrSummary}
+                showOKRCard={showOKRCard}
+              />
+            )}
+
+            {currentStep === 2 && (
+              <VisionSection
+                visionData={visionData}
+                onVisionChange={handleVisionChange}
+                onSubmit={handleVisionSubmit}
+                isLoading={isLoading}
+              />
+            )}
+
+            {currentStep === 3 && <AnalysisSection />}
+
+            {currentStep === 4 && futureVision && okrData && (
+              <ReportSection futureVision={futureVision} okrData={okrData} />
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
