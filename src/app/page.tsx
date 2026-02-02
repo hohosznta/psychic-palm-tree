@@ -9,12 +9,13 @@ import VisionSection from "@/components/VisionSection";
 import AnalysisSection from "@/components/AnalysisSection";
 import ReportSection from "@/components/ReportSection";
 import WeeklyPlanSection from "@/components/WeeklyPlanSection";
+import FeedbackSection from "@/components/FeedbackSection";
 import LoginModal from "@/components/LoginModal";
 import { Message, OKRData, VisionData, FutureVision, PERSONAS } from "@/types";
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "initial",
@@ -230,11 +231,21 @@ export default function Home() {
       setCurrentStep(4);
     } else if (step === 5 && currentStep >= 4) {
       setCurrentStep(5);
+    } else if (step === 6 && currentStep >= 5) {
+      setCurrentStep(6);
     }
   };
 
   const handleGoToWeeklyPlan = () => {
     setCurrentStep(5);
+  };
+
+  const handleGoToFeedback = () => {
+    setCurrentStep(6);
+  };
+
+  const handleFeedbackComplete = () => {
+    handleReset();
   };
 
   // Show loading state
@@ -303,6 +314,15 @@ export default function Home() {
                 okrData={okrData}
                 persona={futureVision?.persona || null}
                 visionData={visionData}
+                onGoToFeedback={handleGoToFeedback}
+              />
+            )}
+
+            {currentStep === 6 && (
+              <FeedbackSection
+                okrData={okrData}
+                persona={futureVision?.persona || null}
+                onComplete={handleFeedbackComplete}
               />
             )}
           </div>

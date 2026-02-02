@@ -12,6 +12,8 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
+  MessageSquare,
+  ArrowRight,
 } from "lucide-react";
 import { OKRData, Persona, VisionData } from "@/types";
 
@@ -19,6 +21,7 @@ interface WeeklyPlanSectionProps {
   okrData: OKRData | null;
   persona: Persona | null;
   visionData: VisionData | null;
+  onGoToFeedback?: () => void;
 }
 
 interface Task {
@@ -71,6 +74,7 @@ export default function WeeklyPlanSection({
   okrData,
   persona,
   visionData,
+  onGoToFeedback,
 }: WeeklyPlanSectionProps) {
   const { data: session } = useSession();
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan | null>(null);
@@ -326,6 +330,20 @@ export default function WeeklyPlanSection({
               </div>
             </div>
           </div>
+
+          {/* Go to Feedback Button */}
+          {onGoToFeedback && (
+            <div className="flex justify-center pt-6">
+              <button
+                onClick={onGoToFeedback}
+                className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-2xl font-black text-lg shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105 transition-all"
+              >
+                <MessageSquare className="w-6 h-6" />
+                피드백 남기기
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex items-center justify-center py-20">

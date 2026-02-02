@@ -103,19 +103,47 @@ export default function Header({ currentStep, onReset }: HeaderProps) {
           >
             <div
               className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                currentStep === 5
+                currentStep > 5
+                  ? "bg-[#F97316] text-white"
+                  : currentStep === 5
                   ? "bg-[#F97316] text-white"
                   : "bg-slate-200 text-slate-500"
               }`}
             >
-              {currentStep === 5 ? <Check className="w-3 h-3" /> : "4"}
+              {currentStep > 5 ? <Check className="w-3 h-3" /> : "4"}
             </div>
             <span
               className={`text-xs font-bold ${
-                currentStep === 5 ? "text-slate-900" : "text-slate-400"
+                currentStep >= 5 ? "text-slate-900" : "text-slate-400"
               }`}
             >
               Weekly
+            </span>
+          </div>
+
+          <ChevronRight className="w-4 h-4 text-slate-200" />
+
+          {/* Step 5 */}
+          <div
+            className={`flex items-center gap-2 ${
+              currentStep < 6 ? "opacity-30" : ""
+            }`}
+          >
+            <div
+              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                currentStep === 6
+                  ? "bg-[#F97316] text-white"
+                  : "bg-slate-200 text-slate-500"
+              }`}
+            >
+              {currentStep === 6 ? <Check className="w-3 h-3" /> : "5"}
+            </div>
+            <span
+              className={`text-xs font-bold ${
+                currentStep === 6 ? "text-slate-900" : "text-slate-400"
+              }`}
+            >
+              Feedback
             </span>
           </div>
         </div>

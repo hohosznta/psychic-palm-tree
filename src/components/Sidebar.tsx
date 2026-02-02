@@ -1,7 +1,7 @@
 "use client";
 
 import { signOut } from "next-auth/react";
-import { MessageSquare, Sparkles, LayoutDashboard, User, LogOut, Calendar } from "lucide-react";
+import { MessageSquare, Sparkles, LayoutDashboard, User, LogOut, Calendar, Star } from "lucide-react";
 
 interface SidebarProps {
   currentStep: number;
@@ -70,6 +70,8 @@ export default function Sidebar({ currentStep, onNavClick, userName, userImage }
           className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all ${
             currentStep === 5
               ? "bg-[#F97316] text-white"
+              : currentStep > 5
+              ? "text-slate-400 hover:bg-slate-800"
               : currentStep >= 4
               ? "text-slate-400 hover:bg-slate-800"
               : "text-slate-600 cursor-not-allowed"
@@ -77,6 +79,19 @@ export default function Sidebar({ currentStep, onNavClick, userName, userImage }
         >
           <Calendar className="w-5 h-5" />
           <span className="font-bold text-sm">주간 계획</span>
+        </div>
+        <div
+          onClick={() => currentStep >= 5 && onNavClick(6)}
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all ${
+            currentStep === 6
+              ? "bg-[#F97316] text-white"
+              : currentStep >= 5
+              ? "text-slate-400 hover:bg-slate-800"
+              : "text-slate-600 cursor-not-allowed"
+          }`}
+        >
+          <Star className="w-5 h-5" />
+          <span className="font-bold text-sm">피드백</span>
         </div>
       </nav>
 
