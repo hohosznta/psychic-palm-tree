@@ -13,11 +13,11 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
-import { OKRData, PersonaData, VisionData } from "@/types";
+import { OKRData, Persona, VisionData } from "@/types";
 
 interface WeeklyPlanSectionProps {
   okrData: OKRData | null;
-  persona: PersonaData | null;
+  persona: Persona | null;
   visionData: VisionData | null;
 }
 
