@@ -96,12 +96,21 @@ export interface Persona {
   reasoning?: string;
 }
 
+export interface ParsedVision {
+  sixMonths: { work: string; growth: string; relationships: string };
+  oneYear: { career: string; expertise: string; lifestyle: string };
+  threeYears: { achievement: string; influence: string; life: string };
+  exchange: { giveUp: string; invest: string; habits: string };
+}
+
 export interface FutureVision {
   persona: Persona;
   vision: string;
+  parsedVision?: ParsedVision;
   generatedAt: string;
   okrReference: string;
   actionPlan?: string;
+  actionTasks?: string[];
 }
 
 export interface AppState {

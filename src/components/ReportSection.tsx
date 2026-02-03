@@ -1,5 +1,8 @@
 "use client";
 
+import { useRef, useState } from "react";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import {
   Zap,
   Trophy,
@@ -15,8 +18,9 @@ import {
   Plus,
   Sparkles,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
-import { FutureVision, OKRData } from "@/types";
+import { FutureVision, OKRData, ParsedVision } from "@/types";
 
 interface ReportSectionProps {
   futureVision: FutureVision;
@@ -24,111 +28,131 @@ interface ReportSectionProps {
   onGoToWeeklyPlan?: () => void;
 }
 
-interface ParsedVision {
-  sixMonths: { work: string; growth: string; relationships: string };
-  oneYear: { career: string; expertise: string; lifestyle: string };
-  threeYears: { achievement: string; influence: string; life: string };
-  exchange: { giveUp: string; invest: string; habits: string };
-}
-
 export default function ReportSection({
   futureVision,
   okrData,
   onGoToWeeklyPlan,
 }: ReportSectionProps) {
-  // Parse the vision text into structured sections
-  const parseVision = (visionText: string): ParsedVision => {
+  const reportRef = useRef<HTMLElement>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    if (!reportRef.current || isGeneratingPdf) return;
+
+    setIsGeneratingPdf(true);
+    try {
+      const element = reportRef.current;
+
+      // Create canvas from the element
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+
+      // Calculate how many pages we need
+      const scaledHeight = imgHeight * ratio;
+      const pageCount = Math.ceil(scaledHeight / pdfHeight);
+
+      for (let i = 0; i < pageCount; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+        pdf.addImage(
+          imgData,
+          "PNG",
+          imgX,
+          -i * pdfHeight,
+          imgWidth * ratio,
+          imgHeight * ratio
+        );
+      }
+
+      // Generate filename with date
+      const date = new Date().toISOString().split("T")[0];
+      pdf.save(`OKR_Vision_Report_${date}.pdf`);
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      alert("PDF 생성에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  // Get parsed vision - use pre-parsed data if available, otherwise use defaults
+  const getParsedVision = (): ParsedVision => {
     const defaultVision: ParsedVision = {
-      sixMonths: { work: "", growth: "", relationships: "" },
-      oneYear: { career: "", expertise: "", lifestyle: "" },
-      threeYears: { achievement: "", influence: "", life: "" },
-      exchange: { giveUp: "", invest: "", habits: "" },
+      sixMonths: { work: "목표 달성을 위한 기반 구축", growth: "핵심 역량 개발 시작", relationships: "협업 네트워크 확장" },
+      oneYear: { career: "전문가로서의 입지 확립", expertise: "심화 전문성 확보", lifestyle: "균형 잡힌 일상 실현" },
+      threeYears: { achievement: "업계 리더로 성장", influence: "조직 내 핵심 인재로 인정", life: "이상적인 삶의 실현" },
+      exchange: { giveUp: "비효율적인 습관과 시간 낭비", invest: "학습과 네트워킹에 시간 투자", habits: "꾸준한 자기 개발 루틴" },
     };
 
-    if (!visionText) return defaultVision;
-
-    const sections = visionText.split(/##\s+/);
-
-    sections.forEach((section) => {
-      const lines = section.trim().split("\n").filter(l => l.trim());
-
-      if (section.includes("6개월")) {
-        const bullets = lines.filter(l => l.startsWith("-")).map(l => l.replace(/^-\s*/, "").trim());
-        defaultVision.sixMonths = {
-          work: bullets[0] || extractBullet(section, "업무") || "목표 달성을 위한 기반 구축",
-          growth: bullets[1] || extractBullet(section, "개인") || "핵심 역량 개발 시작",
-          relationships: bullets[2] || extractBullet(section, "관계") || "협업 네트워크 확장",
-        };
-      } else if (section.includes("1년")) {
-        const bullets = lines.filter(l => l.startsWith("-")).map(l => l.replace(/^-\s*/, "").trim());
-        defaultVision.oneYear = {
-          career: bullets[0] || extractBullet(section, "커리어") || "전문가로서의 입지 확립",
-          expertise: bullets[1] || extractBullet(section, "전문") || "심화 전문성 확보",
-          lifestyle: bullets[2] || extractBullet(section, "라이프") || "균형 잡힌 일상 실현",
-        };
-      } else if (section.includes("3년")) {
-        const bullets = lines.filter(l => l.startsWith("-")).map(l => l.replace(/^-\s*/, "").trim());
-        defaultVision.threeYears = {
-          achievement: bullets[0] || extractBullet(section, "성취") || "업계 리더로 성장",
-          influence: bullets[1] || extractBullet(section, "영향") || "조직 내 핵심 인재로 인정",
-          life: bullets[2] || extractBullet(section, "삶") || "이상적인 삶의 실현",
-        };
-      } else if (section.includes("교환") || section.includes("Exchange")) {
-        const bullets = lines.filter(l => l.startsWith("-")).map(l => l.replace(/^-\s*/, "").trim());
-        defaultVision.exchange = {
-          giveUp: bullets[0] || extractBullet(section, "포기") || "비효율적인 습관과 시간 낭비",
-          invest: bullets[1] || extractBullet(section, "투자") || "학습과 네트워킹에 시간 투자",
-          habits: bullets[2] || extractBullet(section, "습관") || "꾸준한 자기 개발 루틴",
-        };
-      }
-    });
+    // Use pre-parsed vision data from API if available
+    if (futureVision.parsedVision) {
+      return {
+        sixMonths: {
+          work: futureVision.parsedVision.sixMonths?.work || defaultVision.sixMonths.work,
+          growth: futureVision.parsedVision.sixMonths?.growth || defaultVision.sixMonths.growth,
+          relationships: futureVision.parsedVision.sixMonths?.relationships || defaultVision.sixMonths.relationships,
+        },
+        oneYear: {
+          career: futureVision.parsedVision.oneYear?.career || defaultVision.oneYear.career,
+          expertise: futureVision.parsedVision.oneYear?.expertise || defaultVision.oneYear.expertise,
+          lifestyle: futureVision.parsedVision.oneYear?.lifestyle || defaultVision.oneYear.lifestyle,
+        },
+        threeYears: {
+          achievement: futureVision.parsedVision.threeYears?.achievement || defaultVision.threeYears.achievement,
+          influence: futureVision.parsedVision.threeYears?.influence || defaultVision.threeYears.influence,
+          life: futureVision.parsedVision.threeYears?.life || defaultVision.threeYears.life,
+        },
+        exchange: {
+          giveUp: futureVision.parsedVision.exchange?.giveUp || defaultVision.exchange.giveUp,
+          invest: futureVision.parsedVision.exchange?.invest || defaultVision.exchange.invest,
+          habits: futureVision.parsedVision.exchange?.habits || defaultVision.exchange.habits,
+        },
+      };
+    }
 
     return defaultVision;
   };
 
-  const extractBullet = (text: string, keyword: string): string => {
-    const lines = text.split("\n");
-    for (const line of lines) {
-      if (line.includes(keyword)) {
-        return line.replace(/^[-*]\s*/, "").replace(/\*\*/g, "").trim();
-      }
+  // Get action tasks - use pre-parsed data if available
+  const getActionTasks = (): string[] => {
+    const defaultTasks = [
+      "핵심 데이터 수집 포인트 식별 및 정제 프로세스 수립",
+      "주요 병목 구간 시뮬레이션 모델링 및 가설 검증",
+      "전문가 그룹 거버넌스 및 기술 스택 최종 확정",
+    ];
+
+    // Use pre-parsed action tasks from API if available
+    if (futureVision.actionTasks && futureVision.actionTasks.length > 0) {
+      return futureVision.actionTasks.slice(0, 3);
     }
-    return "";
+
+    return defaultTasks;
   };
 
-  // Parse action plan to extract tasks
-  const parseActionTasks = (actionPlan: string | undefined) => {
-    if (!actionPlan) {
-      return [
-        "핵심 데이터 수집 포인트 식별 및 정제 프로세스 수립",
-        "주요 병목 구간 시뮬레이션 모델링 및 가설 검증",
-        "전문가 그룹 거버넌스 및 기술 스택 최종 확정",
-      ];
-    }
-
-    const tasks: string[] = [];
-    const lines = actionPlan.split("\n");
-    for (const line of lines) {
-      const match = line.match(/\*\*Task\s*\d+[:\*]*\*?\*?\s*(.+)/i);
-      if (match) {
-        tasks.push(match[1].trim());
-      }
-    }
-
-    return tasks.length > 0
-      ? tasks.slice(0, 3)
-      : [
-          "핵심 데이터 수집 포인트 식별 및 정제 프로세스 수립",
-          "주요 병목 구간 시뮬레이션 모델링 및 가설 검증",
-          "전문가 그룹 거버넌스 및 기술 스택 최종 확정",
-        ];
-  };
-
-  const parsedVision = parseVision(futureVision.vision);
-  const actionTasks = parseActionTasks(futureVision.actionPlan);
+  const parsedVision = getParsedVision();
+  const actionTasks = getActionTasks();
 
   return (
-    <section className="space-y-10 animate-fade-in animate-slide-up pb-20">
+    <section ref={reportRef} className="space-y-10 animate-fade-in animate-slide-up pb-20 bg-white">
       {/* Header */}
       <div className="flex items-end justify-between border-b-2 border-slate-900 pb-8">
         <div>
@@ -139,8 +163,20 @@ export default function ReportSection({
             Vision Outcome
           </h2>
         </div>
-        <button className="px-6 py-3 bg-[#F97316] text-white rounded-xl font-black text-xs flex items-center gap-2 hover:bg-[#EA580C] shadow-lg shadow-orange-500/30">
-          <Zap className="w-4 h-4" /> DOWNLOAD PDF
+        <button
+          onClick={handleDownloadPDF}
+          disabled={isGeneratingPdf}
+          className="px-6 py-3 bg-[#F97316] text-white rounded-xl font-black text-xs flex items-center gap-2 hover:bg-[#EA580C] shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isGeneratingPdf ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" /> GENERATING...
+            </>
+          ) : (
+            <>
+              <Zap className="w-4 h-4" /> DOWNLOAD PDF
+            </>
+          )}
         </button>
       </div>
 

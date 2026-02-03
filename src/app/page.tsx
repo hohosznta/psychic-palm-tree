@@ -170,7 +170,9 @@ export default function Home() {
       setFutureVision({
         persona,
         vision: visionResult.vision,
+        parsedVision: visionResult.parsedVision,
         actionPlan: visionResult.actionPlan,
+        actionTasks: visionResult.actionTasks,
         generatedAt: visionResult.generatedAt,
         okrReference: okrData.objective,
       });
