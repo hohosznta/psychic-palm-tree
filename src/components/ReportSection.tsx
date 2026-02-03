@@ -43,15 +43,25 @@ export default function ReportSection({
     try {
       const element = reportRef.current;
 
-      // Create canvas from the element
+      // Add class to fix transparency issues for PDF
+      element.classList.add("pdf-mode");
+
+      // Wait for styles to apply
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Create high-resolution canvas
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
       });
 
+      // Remove PDF mode class
+      element.classList.remove("pdf-mode");
+
       const imgData = canvas.toDataURL("image/png");
+
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
@@ -60,27 +70,25 @@ export default function ReportSection({
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+
+      // Calculate dimensions to fit width with padding
+      const padding = 8;
+      const contentWidth = pdfWidth - padding * 2;
+      const ratio = contentWidth / canvas.width;
+      const scaledHeight = canvas.height * ratio;
 
       // Calculate how many pages we need
-      const scaledHeight = imgHeight * ratio;
-      const pageCount = Math.ceil(scaledHeight / pdfHeight);
+      const pageContentHeight = pdfHeight - padding * 2;
+      const pageCount = Math.ceil(scaledHeight / pageContentHeight);
 
       for (let i = 0; i < pageCount; i++) {
         if (i > 0) {
           pdf.addPage();
         }
-        pdf.addImage(
-          imgData,
-          "PNG",
-          imgX,
-          -i * pdfHeight,
-          imgWidth * ratio,
-          imgHeight * ratio
-        );
+
+        const yOffset = -(i * pageContentHeight) + padding;
+
+        pdf.addImage(imgData, "PNG", padding, yOffset, contentWidth, scaledHeight);
       }
 
       // Generate filename with date

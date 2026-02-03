@@ -75,3 +75,77 @@ body {
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
+/* PDF Mode - Replace transparency and gradients with solid colors */
+.pdf-mode,
+.pdf-mode * {
+  opacity: 1 !important;
+}
+
+.pdf-mode .bg-white\/60 {
+  background-color: #f8fafc !important;
+}
+
+.pdf-mode .bg-white\/50 {
+  background-color: #fef7f0 !important;
+}
+
+.pdf-mode .bg-white\/5 {
+  background-color: #1e293b !important;
+}
+
+.pdf-mode .bg-gradient-to-br {
+  background-image: none !important;
+}
+
+.pdf-mode .from-blue-50 {
+  background-color: #eff6ff !important;
+}
+
+.pdf-mode .from-purple-50 {
+  background-color: #faf5ff !important;
+}
+
+.pdf-mode .from-emerald-50 {
+  background-color: #ecfdf5 !important;
+}
+
+.pdf-mode .from-orange-50 {
+  background-color: #fff7ed !important;
+}
+
+.pdf-mode .bg-red-500\/10 {
+  background-color: #fef2f2 !important;
+}
+
+.pdf-mode .bg-green-500\/10 {
+  background-color: #f0fdf4 !important;
+}
+
+.pdf-mode .bg-yellow-500\/10 {
+  background-color: #fefce8 !important;
+}
+
+.pdf-mode .bg-blue-200\/50 {
+  background-color: #bfdbfe !important;
+}
+
+.pdf-mode .bg-purple-200\/50 {
+  background-color: #e9d5ff !important;
+}
+
+.pdf-mode .bg-emerald-200\/50 {
+  background-color: #a7f3d0 !important;
+}
+
+.pdf-mode .bg-red-500\/20 {
+  background-color: #fecaca !important;
+}
+
+.pdf-mode .bg-green-500\/20 {
+  background-color: #bbf7d0 !important;
+}
+
+.pdf-mode .bg-yellow-500\/20 {
+  background-color: #fef08a !important;
+}
