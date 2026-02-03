@@ -48,8 +48,18 @@ ${historyContext || "없음"}
     const text = response.text();
 
     return NextResponse.json({ message: text });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Chat API Error:", error);
+
+    // Check for 429 rate limit error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes("429") || errorMessage.includes("quota") || errorMessage.includes("rate")) {
+      return NextResponse.json(
+        { error: "현재 Gemini API 요청량이 너무 많습니다. 잠시 후에 다시 시도해주세요.", isRateLimit: true },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to generate response" },
       { status: 500 }

@@ -110,8 +110,18 @@ ${calendarSummary}
       weeklyPlan: parsedResult,
       generatedAt: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Generate Weekly Plan API Error:", error);
+
+    // Check for 429 rate limit error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes("429") || errorMessage.includes("quota") || errorMessage.includes("rate")) {
+      return NextResponse.json(
+        { error: "현재 Gemini API 요청량이 너무 많습니다. 잠시 후에 다시 시도해주세요.", isRateLimit: true },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to generate weekly plan", weeklyPlan: getDefaultWeeklyPlan() },
       { status: 500 }

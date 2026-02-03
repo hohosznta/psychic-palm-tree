@@ -115,11 +115,17 @@ export default function WeeklyPlanSection({
         }),
       });
 
+      const data = await response.json();
+
+      // Check for rate limit error
+      if (response.status === 429 || data.isRateLimit) {
+        throw new Error(data.error || "현재 Gemini API 요청량이 너무 많습니다. 잠시 후에 다시 시도해주세요.");
+      }
+
       if (!response.ok) {
         throw new Error("주간 계획 생성에 실패했습니다.");
       }
 
-      const data = await response.json();
       setWeeklyPlan(data.weeklyPlan);
     } catch (err) {
       setError(err instanceof Error ? err.message : "오류가 발생했습니다.");

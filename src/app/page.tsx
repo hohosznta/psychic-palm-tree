@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { AlertCircle, X } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import CoachingSection from "@/components/CoachingSection";
@@ -38,6 +39,15 @@ export default function Home() {
   const [futureVision, setFutureVision] = useState<FutureVision | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Auto-hide error message after 5 seconds
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
 
   const handleSend = useCallback(async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -65,6 +75,12 @@ export default function Home() {
 
       const data = await response.json();
 
+      // Check for rate limit error
+      if (response.status === 429 || data.isRateLimit) {
+        setErrorMessage(data.error || "현재 Gemini API 요청량이 너무 많습니다. 잠시 후에 다시 시도해주세요.");
+        return;
+      }
+
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
         role: "ai",
@@ -74,12 +90,12 @@ export default function Home() {
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
       console.error("Chat error:", error);
-      const errorMessage: Message = {
+      const errorMsg: Message = {
         id: `ai-${Date.now()}`,
         role: "ai",
         content: "네트워크 오류가 발생했습니다. 다시 시도해주세요.",
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
     }
@@ -98,6 +114,13 @@ export default function Home() {
       });
 
       const data = await response.json();
+
+      // Check for rate limit error
+      if (response.status === 429 || data.isRateLimit) {
+        setErrorMessage(data.error || "현재 Gemini API 요청량이 너무 많습니다. 잠시 후에 다시 시도해주세요.");
+        setIsExtracting(false);
+        return;
+      }
 
       setOkrData({
         objective: data.objective,
@@ -156,6 +179,15 @@ export default function Home() {
       });
 
       const personaResult = await personaResponse.json();
+
+      // Check for rate limit error
+      if (personaResponse.status === 429 || personaResult.isRateLimit) {
+        setErrorMessage(personaResult.error || "현재 Gemini API 요청량이 너무 많습니다. 잠시 후에 다시 시도해주세요.");
+        setCurrentStep(2);
+        setIsLoading(false);
+        return;
+      }
+
       const persona = personaResult.persona || PERSONAS["F"];
 
       // Then, generate vision
@@ -166,6 +198,14 @@ export default function Home() {
       });
 
       const visionResult = await visionResponse.json();
+
+      // Check for rate limit error
+      if (visionResponse.status === 429 || visionResult.isRateLimit) {
+        setErrorMessage(visionResult.error || "현재 Gemini API 요청량이 너무 많습니다. 잠시 후에 다시 시도해주세요.");
+        setCurrentStep(2);
+        setIsLoading(false);
+        return;
+      }
 
       setFutureVision({
         persona,
@@ -269,6 +309,22 @@ export default function Home() {
 
   return (
     <div className="flex h-full">
+      {/* Error Toast */}
+      {errorMessage && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
+          <div className="flex items-center gap-3 px-6 py-4 bg-red-50 border border-red-200 rounded-xl shadow-lg">
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+            <p className="text-sm font-bold text-red-700">{errorMessage}</p>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="p-1 hover:bg-red-100 rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4 text-red-500" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <Sidebar currentStep={currentStep} onNavClick={handleNavClick} userName={session.user?.name || "User"} userImage={session.user?.image} />
 
       <main className="flex-1 flex flex-col relative overflow-hidden">
