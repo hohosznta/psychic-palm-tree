@@ -230,9 +230,9 @@ export default function FeedbackSection({
               </p>
             </div>
             <div className="bg-white/60 p-4 rounded-xl">
-              <p className="text-xs text-orange-500 font-bold mb-1">페르소나</p>
+              <p className="text-xs text-orange-500 font-bold mb-1">프로필</p>
               <p className="text-sm text-slate-700 font-medium truncate">
-                {persona?.name || "미분류"}
+                {persona?.personaSummary ? "분석 완료" : "미분류"}
               </p>
             </div>
           </div>

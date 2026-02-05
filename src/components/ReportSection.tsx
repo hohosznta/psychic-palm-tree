@@ -188,41 +188,20 @@ export default function ReportSection({
         </button>
       </div>
 
-      {/* Persona Card */}
+      {/* Profile Card */}
       <div className="p-10 rounded-[2.5rem] border-2 border-slate-900 bg-orange-50 flex items-start gap-8 shadow-[10px_10px_0_0_#0F172A]">
         <div className="w-20 h-20 bg-white border-2 border-slate-900 rounded-3xl flex items-center justify-center shrink-0">
           <Trophy className="w-10 h-10 text-orange-500" />
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-2xl font-black italic uppercase tracking-tighter">
-              {futureVision.persona.name.split(" ")[0]}
-            </span>
-            <span className="px-2 py-0.5 bg-[#0F172A] text-white rounded text-[8px] font-black uppercase">
-              Core Profile
+          <div className="flex items-center gap-3 mb-4">
+            <span className="px-3 py-1 bg-[#0F172A] text-white rounded-lg text-xs font-black uppercase">
+              Profile Summary
             </span>
           </div>
-          <p className="text-lg font-bold text-orange-900 opacity-80 mb-4">
-            {futureVision.persona.description}
+          <p className="text-xl font-bold text-orange-900">
+            {futureVision.persona.personaSummary}
           </p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 bg-white/50 rounded-xl border border-orange-100">
-              <p className="text-[9px] font-black text-orange-400 uppercase mb-1">
-                Traits
-              </p>
-              <p className="text-sm font-bold">
-                {futureVision.persona.traits.slice(0, 2).join(", ")}
-              </p>
-            </div>
-            <div className="p-3 bg-white/50 rounded-xl border border-orange-100">
-              <p className="text-[9px] font-black text-orange-400 uppercase mb-1">
-                Focus
-              </p>
-              <p className="text-sm font-bold">
-                {futureVision.persona.visionFocus}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 

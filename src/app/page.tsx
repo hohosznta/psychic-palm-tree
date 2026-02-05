@@ -12,7 +12,7 @@ import ReportSection from "@/components/ReportSection";
 import WeeklyPlanSection from "@/components/WeeklyPlanSection";
 import FeedbackSection from "@/components/FeedbackSection";
 import LoginModal from "@/components/LoginModal";
-import { Message, OKRData, VisionData, FutureVision, PERSONAS } from "@/types";
+import { Message, OKRData, VisionData, FutureVision } from "@/types";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -175,7 +175,7 @@ export default function Home() {
       const personaResponse = await fetch("/api/classify-persona", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ okrData, visionData }),
+        body: JSON.stringify({ okrData, visionData, userName: session?.user?.name }),
       });
 
       const personaResult = await personaResponse.json();
@@ -188,7 +188,7 @@ export default function Home() {
         return;
       }
 
-      const persona = personaResult.persona || PERSONAS["F"];
+      const persona = personaResult.persona || { personaSummary: "목표를 향해 꾸준히 성장하는 사람입니다." };
 
       // Then, generate vision
       const visionResponse = await fetch("/api/generate-vision", {
@@ -226,7 +226,7 @@ export default function Home() {
       console.error("Error generating vision:", error);
       // Fallback with mock data
       setFutureVision({
-        persona: PERSONAS["F"],
+        persona: { personaSummary: "목표를 향해 꾸준히 성장하는 사람입니다." },
         vision: "AI가 생성한 미래 비전이 여기에 표시됩니다.",
         generatedAt: new Date().toISOString(),
         okrReference: okrData.objective,

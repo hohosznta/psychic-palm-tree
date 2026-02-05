@@ -1,18 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
-import { PERSONAS } from "@/types";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
-    const { okrData, visionData } = await request.json();
+    const { okrData, visionData, userName } = await request.json();
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-    const personaDescriptions = Object.entries(PERSONAS)
-      .map(([code, info]) => `${code}: ${info.name} - ${info.description}`)
-      .join("\n");
 
     // Format vision data from all categories
     const visionSummary = `
@@ -41,7 +36,9 @@ export async function POST(request: NextRequest) {
 - 원하는 업무 방식: ${visionData.values?.workStyle || "미입력"}
 - 더 큰 목적: ${visionData.values?.purpose || "미입력"}`;
 
-    const prompt = `사용자의 OKR과 Life Checklist 응답을 분석하여 가장 적합한 페르소나를 분류해주세요.
+    const displayName = userName || "사용자";
+
+    const prompt = `사용자의 OKR과 Life Checklist 응답을 분석하여 이 사람을 한 문장으로 설명해주세요.
 
 **OKR 정보:**
 - Objective: ${okrData.objective}
@@ -50,15 +47,20 @@ export async function POST(request: NextRequest) {
 **Life Checklist 응답:**
 ${visionSummary}
 
-**페르소나 타입:**
-${personaDescriptions}
-
 **반드시 다음 JSON 형식으로만 응답해주세요:**
 {
-    "persona_code": "A/B/C/D/E/F 중 하나",
-    "confidence": 0.0-1.0 사이의 숫자,
-    "reasoning": "선택한 이유를 2-3문장으로"
+    "personaSummary": "${displayName}님은 [OKR과 Life Checklist 내용을 바탕으로 이 사람의 특성, 목표, 가치관을 자연스럽게 한 문장으로 설명]하는 사람입니다."
 }
+
+personaSummary 작성 가이드:
+- OKR의 목표와 Life Checklist의 가치관을 자연스럽게 연결
+- 구체적인 목표와 추구하는 가치를 포함
+- 1문장으로 간결하게 작성 (50자 이내)
+
+예시:
+- "${displayName}님은 AI 기술을 활용해 업무 효율을 높이고, 팀과 함께 성장하며 일과 삶의 균형을 추구하는 사람입니다."
+- "${displayName}님은 데이터 분석 역량을 키워 조직에 기여하고, 꾸준한 학습으로 전문가로 성장하고자 하는 사람입니다."
+- "${displayName}님은 혁신적인 제품 개발로 고객 가치를 창출하고, 팀원들과 협력하며 지속적으로 배움을 추구하는 사람입니다."
 
 다른 설명 없이 JSON만 반환하세요.`;
 
@@ -76,17 +78,14 @@ ${personaDescriptions}
       }
       parsedResult = JSON.parse(jsonText.trim());
     } catch {
-      parsedResult = { persona_code: "F", confidence: 0.7, reasoning: "기본 분류" };
+      parsedResult = {
+        personaSummary: `${displayName}님은 목표를 향해 꾸준히 성장하며, 균형 잡힌 삶을 추구하는 사람입니다.`,
+      };
     }
-
-    const personaCode = parsedResult.persona_code || "F";
-    const persona = PERSONAS[personaCode] || PERSONAS["F"];
 
     return NextResponse.json({
       persona: {
-        ...persona,
-        confidence: parsedResult.confidence,
-        reasoning: parsedResult.reasoning,
+        personaSummary: parsedResult.personaSummary || `${displayName}님은 목표를 향해 꾸준히 성장하는 사람입니다.`,
       },
     });
   } catch (error: unknown) {

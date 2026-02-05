@@ -87,13 +87,7 @@ export const LIFE_CHECKLIST = {
 } as const;
 
 export interface Persona {
-  code: string;
-  name: string;
-  description: string;
-  traits: string[];
-  visionFocus: string;
-  confidence?: number;
-  reasoning?: string;
+  personaSummary: string;
 }
 
 export interface ParsedVision {
@@ -124,47 +118,3 @@ export interface AppState {
   isLoading: boolean;
 }
 
-export const PERSONAS: Record<string, Persona> = {
-  A: {
-    code: "A",
-    name: "빠른 실행가 (Fast Executor)",
-    description: "목표를 빠르게 설정하고 즉시 실행에 옮기는 타입",
-    traits: ["행동 지향적", "빠른 의사결정", "결과 중심"],
-    visionFocus: "단기 성과와 빠른 성장",
-  },
-  B: {
-    code: "B",
-    name: "전략적 계획가 (Strategic Planner)",
-    description: "체계적으로 계획하고 단계적으로 실행하는 타입",
-    traits: ["분석적", "체계적", "장기 계획"],
-    visionFocus: "지속가능한 발전과 안정적 성장",
-  },
-  C: {
-    code: "C",
-    name: "창의적 혁신가 (Creative Innovator)",
-    description: "새로운 방법을 찾고 혁신을 추구하는 타입",
-    traits: ["창의적", "유연한", "실험적"],
-    visionFocus: "혁신적 변화와 새로운 가능성",
-  },
-  D: {
-    code: "D",
-    name: "관계 중심형 (Relationship Builder)",
-    description: "팀워크와 협업을 중요시하는 타입",
-    traits: ["협력적", "소통 중심", "팀 지향적"],
-    visionFocus: "팀과 함께하는 성장과 영향력",
-  },
-  E: {
-    code: "E",
-    name: "균형 추구형 (Balance Seeker)",
-    description: "일과 삶의 균형을 중요시하는 타입",
-    traits: ["균형 지향", "지속가능성", "웰빙 중심"],
-    visionFocus: "건강한 성장과 삶의 질",
-  },
-  F: {
-    code: "F",
-    name: "학습 성장형 (Learning Grower)",
-    description: "지속적인 학습과 자기계발을 추구하는 타입",
-    traits: ["학습 지향적", "성장 마인드셋", "호기심"],
-    visionFocus: "전문성 향상과 지식 확장",
-  },
-};

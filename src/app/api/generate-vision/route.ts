@@ -42,9 +42,8 @@ export async function POST(request: NextRequest) {
 - Objective: ${okrData.objective}
 - Key Results: ${okrData.keyResults.join(", ")}
 
-**페르소나:** ${persona.name}
-- 특성: ${persona.traits.join(", ")}
-- 비전 포커스: ${persona.visionFocus}
+**사용자 프로필:**
+${persona.personaSummary || "목표를 향해 꾸준히 성장하는 사람입니다."}
 
 **Life Checklist 응답:**
 ${visionSummary}
@@ -104,8 +103,8 @@ ${visionSummary}
     // Generate action plan
     const actionPrompt = `미래 비전을 달성하기 위한 즉시 실행 가능한 3가지 태스크를 만들어주세요.
 
-**페르소나 특성:** ${persona.name}
-- ${persona.traits.join(", ")}
+**사용자 프로필:**
+${persona.personaSummary || "목표를 향해 꾸준히 성장하는 사람입니다."}
 
 **사용자 목표:**
 - 커리어: ${visionData.career?.achievement || visionData.career?.position || "성장"}

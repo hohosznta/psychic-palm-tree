@@ -198,7 +198,7 @@ export default function WeeklyPlanSection({
         {persona && (
           <div className="flex items-center gap-2 text-sm">
             <Sparkles className="w-5 h-5 text-purple-500" />
-            <span className="text-slate-700 font-medium">{persona.name} 페르소나</span>
+            <span className="text-slate-700 font-medium">프로필 분석 완료</span>
           </div>
         )}
       </div>

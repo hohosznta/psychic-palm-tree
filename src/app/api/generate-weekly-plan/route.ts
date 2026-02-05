@@ -26,10 +26,8 @@ export async function POST(request: NextRequest) {
 - **Key Results:**
 ${okrData?.keyResults?.map((kr: string, i: number) => `  ${i + 1}. ${kr}`).join("\n") || "  - 핵심 결과 미설정"}
 
-## 사용자 페르소나
-- **유형:** ${persona?.name || "미분류"}
-- **특성:** ${persona?.traits?.join(", ") || "미분류"}
-- **포커스:** ${persona?.visionFocus || "미분류"}
+## 사용자 프로필
+${persona?.personaSummary || "목표를 향해 꾸준히 성장하는 사람입니다."}
 
 ## 사용자 Life Checklist 요약
 ${visionSummary}
